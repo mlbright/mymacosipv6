@@ -12,17 +12,23 @@ macOS enables temporary privacy addresses by default. Most desktop Linux distrib
 
 This script asks the kernel which source address it would select, so you get the right one regardless of platform.
 
+## Tailscale exit nodes
+
+If a Tailscale exit node is active, the kernel routes outgoing traffic into the tunnel, so the source it picks is your node's Tailscale tunnel address (`fd7a:115c:a1e0::/48`) — not publicly routable, and useless in an allow list. The real egress happens **on the exit node**, where the packet is re-sourced with one of the exit node's own addresses, which your local kernel never sees.
+
+When the script detects an active exit node (via `tailscale status --json`) or a tunnel source address, it falls back to querying an external IPv6 reflector, which reports what the public internet actually sees — the exit node's egress address. Diagnostic notes go to stderr; the address itself is the only thing printed to stdout, so piping still works.
+
 ## Usage
 
 ```
 python3 ipv6.py
 ```
 
-Requires Python 3.6+ and IPv6 connectivity. No dependencies beyond the standard library.
+Requires Python 3.6+ and IPv6 connectivity. No dependencies beyond the standard library. The Tailscale CLI is used only if present; without it, the script behaves exactly as before.
 
 ## Note
 
-Temporary privacy addresses rotate periodically. If your allow list stops working, re-run the script to get the current address. For a more durable solution, allow your entire `/64` prefix instead of a single address.
+Temporary privacy addresses rotate periodically — and an exit node may use a rotating temporary address for its own egress too. If your allow list stops working, re-run the script to get the current address. For a more durable solution, allow the entire `/64` prefix instead of a single address.
 
 ## License
 
